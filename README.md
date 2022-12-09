@@ -70,4 +70,5 @@ train과 test 모두
 #### 모델 평가 및 예측+ CSV 작성
 ![image](https://user-images.githubusercontent.com/107663853/206637922-98afd92e-040c-4d9d-ab02-bc953116fe1a.png)
 
-
+#### 최종 성적
+![image](https://user-images.githubusercontent.com/107663853/206638123-0630e108-e701-46e4-a0cf-d119e311ceee.png)
