@@ -17,7 +17,7 @@ path = 'D:\\ai_data/'
 
 data_all = pd.read_csv(path+'data_all.csv')
 mean_data = np.load(path+'mean_data.npy')
-
+# ablation study
 # data_all = data_all.drop(['RP','Total','amount_of_gas','hightemp'],axis=1)
 data_all = data_all.drop(['date','RP','Total','amount_of_gas','hightemp'],axis=1)
 data_all = data_all.fillna(0)
