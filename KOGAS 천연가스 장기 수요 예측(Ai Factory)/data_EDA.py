@@ -3,7 +3,7 @@ import numpy as np
 path = 'D:\\ai_data/'
 df = pd.read_csv(path+'과제1(산업용).csv')
 df2 = pd.read_csv(path+'과제1공급량.csv')
-
+## 결측이 없는 데이터지만 습관적으로 확인필요
 # aa = []
 # c = df[(df['MONTH']==1)][['RP(상대가격)']].reset_index(drop=True)
 # # print(c.loc[1])
