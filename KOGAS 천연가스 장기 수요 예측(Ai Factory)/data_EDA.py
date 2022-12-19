@@ -14,6 +14,7 @@ df2 = pd.read_csv(path+'과제1공급량.csv')
 #         ab = c.loc[i+1] - c.loc[i]
 #         aa.append(ab)
 
+# 평균값 확인
 # print(np.mean(aa))
 
 # print(df2)
