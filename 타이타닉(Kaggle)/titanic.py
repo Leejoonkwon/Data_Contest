@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd 
+# 버전별 다르지만 tensorflow.keras가 일반적으로 쓰이는 듯함
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import Dense
 from sklearn.model_selection import train_test_split
