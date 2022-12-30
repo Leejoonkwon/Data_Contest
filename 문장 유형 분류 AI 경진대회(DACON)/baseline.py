@@ -203,3 +203,7 @@ def sentence_train(model, train_dataloader, val_dataloader, learning_rate, epoch
             if early_stopping_threshold_count >= 3: # ==> patience=1
                 print("Early stopping")
                 break
+            
+train_tmp = train[['문장', '유형', '극성', '시제', '확실성']]
+train_tmp = pd.get_dummies(train_tmp, columns=['유형', '극성', '시제', '확실성'])
+print(train_tmp)
