@@ -218,3 +218,58 @@ train_labels = {
     'tense': train_tense,
     'certainty': train_certainty
 }
+val_tmp = val[['문장', '유형', '극성', '시제', '확실성']]
+val_tmp = pd.get_dummies(val_tmp, columns=['유형', '극성', '시제', '확실성'])
+
+val_type = val_tmp.iloc[:,1:5].values.tolist()
+val_polarity = val_tmp.iloc[:,5:8].values.tolist()
+val_tense = val_tmp.iloc[:,8:11].values.tolist()
+val_certainty = val_tmp.iloc[:,11:13].values.tolist()
+val_labels = {
+    'type': val_type,
+    'polarity': val_polarity,
+    'tense': val_tense,
+    'certainty': val_certainty
+}
+train_dataloader = DataLoader(SentenceTypeDataset(train_tmp, tokenizer, train_labels), batch_size=CFG['BATCH_SIZE'], shuffle=True, num_workers=0) # num_workers: how many subprocesses to use for data loading  
+val_dataloader = DataLoader(SentenceTypeDataset(val_tmp, tokenizer, val_labels), batch_size=CFG['BATCH_SIZE'], num_workers=0)
+
+model = SentenceClassifier(base_model)
+
+sentence_train(model, train_dataloader, val_dataloader, CFG['LEARNING_RATE'], CFG['EPOCHS'], 'kclue')
+
+def get_type_predictions(model, loader):
+
+    device = torch.device('mps')
+    model = model.to(device)
+    
+    type_probs, polarity_probs, tense_probs, clarity_probs = [], [], [], []
+    with torch.no_grad():
+        model.eval()
+        for data_input, _, _, _, _ in tqdm(loader):
+            attention_mask = data_input['attention_mask'].to(device)
+            input_ids = data_input['input_ids'].squeeze(1).to(device)
+
+
+            type_output, polarity_output, tense_output, clarity_output = model(input_ids, attention_mask)
+            type_probs.append(type_output)
+            polarity_probs.append(polarity_output)
+            tense_probs.append(tense_output)
+            clarity_probs.append(clarity_output)
+    
+    return torch.cat(type_probs).cpu().detach().numpy(), \
+            torch.cat(polarity_probs).cpu().detach().numpy(), \
+            torch.cat(tense_probs).cpu().detach().numpy(), \
+            torch.cat(clarity_probs).cpu().detach().numpy()
+model = torch.load("model/kclue.pt")
+test_dataloader = DataLoader(SentenceTypeDataset(test, tokenizer), batch_size=CFG['BATCH_SIZE'], shuffle=False)
+
+#val_pred_type, val_pred_polarity, val_pred_tense, val_pred_certainty = get_type_predictions(model, val_dataloader)
+
+#val_type = ['대화형' if i==0 else '사실형' if i==1 else '예측형' if i==2 else '추론형' for i in [np.argmax(p) for p in val_pred_type]]
+#val_polarity = ['긍정' if i==0 else '미정' if i==1 else '부정' for i in [np.argmax(p) for p in val_pred_polarity]]
+#val_type = ['과거' if i==0 else '미래' if i==1 else '현재' for i in [np.argmax(p) for p in val_pred_tense]]
+#val_type = ['불확실' if i==0 else '확실' for i in [np.argmax(p) for p in val_pred_certainty]]
+
+test_pred_type, test_pred_polarity, test_pred_tense, test_pred_certainty = get_type_predictions(model, test_dataloader)
+print(test_pred_tense)
