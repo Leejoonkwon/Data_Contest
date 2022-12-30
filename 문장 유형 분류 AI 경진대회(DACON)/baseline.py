@@ -273,3 +273,17 @@ test_dataloader = DataLoader(SentenceTypeDataset(test, tokenizer), batch_size=CF
 
 test_pred_type, test_pred_polarity, test_pred_tense, test_pred_certainty = get_type_predictions(model, test_dataloader)
 print(test_pred_tense)
+
+test_type = ['대화형' if i==0 else '사실형' if i==1 else '예측형' if i==2 else '추론형' for i in [np.argmax(p) for p in test_pred_type]]
+test_polarity = ['긍정' if i==0 else '미정' if i==1 else '부정' for i in [np.argmax(p) for p in test_pred_polarity]]
+test_tense = ['과거' if i==0 else '미래' if i==1 else '현재' for i in [np.argmax(p) for p in test_pred_tense]]
+test_certainty = ['불확실' if i==0 else '확실' for i in [np.argmax(p) for p in test_pred_certainty]]
+
+label_sum = []
+for i in range(len(test_type)):
+    label_sum.append(f'{test_type[i]}-{test_polarity[i]}-{test_tense[i]}-{test_certainty[i]}')
+
+submission['label'] = label_sum
+submission.to_csv('submission/klue1.csv', index=False)
+
+print(submission)
