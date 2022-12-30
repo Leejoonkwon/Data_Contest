@@ -207,3 +207,14 @@ def sentence_train(model, train_dataloader, val_dataloader, learning_rate, epoch
 train_tmp = train[['문장', '유형', '극성', '시제', '확실성']]
 train_tmp = pd.get_dummies(train_tmp, columns=['유형', '극성', '시제', '확실성'])
 print(train_tmp)
+
+train_type = train_tmp.iloc[:,1:5].values.tolist()
+train_polarity = train_tmp.iloc[:,5:8].values.tolist()
+train_tense = train_tmp.iloc[:,8:11].values.tolist()
+train_certainty = train_tmp.iloc[:,11:13].values.tolist()
+train_labels = {
+    'type': train_type,
+    'polarity': train_polarity,
+    'tense': train_tense,
+    'certainty': train_certainty
+}
