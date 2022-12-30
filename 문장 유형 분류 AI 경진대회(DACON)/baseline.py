@@ -118,3 +118,88 @@ class SentenceClassifier(nn.Module):
         certainty_output = self.softmax(certainty_output)
 
         return type_output, polarity_output, tense_output, certainty_output
+def sentence_train(model, train_dataloader, val_dataloader, learning_rate, epochs, model_nm):
+    best_val_loss = 99999999999999 # setting max (act as infinity)
+    early_stopping_threshold_count = 0
+
+    criterion = {
+        'type' : nn.CrossEntropyLoss().to(device),
+        'polarity' : nn.CrossEntropyLoss().to(device),
+        'tense' : nn.CrossEntropyLoss().to(device),
+        'certainty' : nn.CrossEntropyLoss().to(device)
+    }
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    model = model.to(device)
+
+    for epoch in range(epochs):
+        total_acc_train = 0
+        total_loss_train = 0
+        
+        model.train() # sets into the training mode
+        
+        for train_input, type_label, polarity_label, tense_label, certainty_label in tqdm(train_dataloader):
+            attention_mask = train_input['attention_mask'].to(device)
+            input_ids = train_input['input_ids'].squeeze(1).to(device)
+            type_label = type_label.to(device)
+            polarity_label = polarity_label.to(device)
+            tense_label = tense_label.to(device)
+            certainty_label = certainty_label.to(device)
+
+            optimizer.zero_grad()
+            
+            type_output, polarity_output, tense_output, certainty_output = model(input_ids, attention_mask) # from the forward function
+            
+            loss = 0.25*criterion['type'](type_output, type_label.float()) + \
+                   0.25*criterion['polarity'](polarity_output, polarity_label.float()) + \
+                   0.25*criterion['tense'](tense_output, tense_label.float()) + \
+                   0.25*criterion['certainty'](certainty_output, certainty_label.float())
+            total_loss_train += loss.item()
+
+            loss.backward()
+            optimizer.step()
+
+
+        with torch.no_grad(): # since we should not change gradient for validation 
+            total_acc_val = 0
+            total_loss_val = 0
+            
+            model.eval() # deactivate training
+            
+            # same process as the above
+            for val_input, vtype_label, vpolarity_label, vtense_label, vcertainty_label in tqdm(val_dataloader):
+                attention_mask = val_input['attention_mask'].to(device)
+                input_ids = val_input['input_ids'].squeeze(1).to(device)
+
+                vtype_label = vtype_label.to(device)
+                vpolarity_label = vpolarity_label.to(device)
+                vtense_label = vtense_label.to(device)
+                vcertainty_label = vcertainty_label.to(device)
+                
+                vtype_output, vpolarity_output, vtense_output, vcertainty_output = model(input_ids, attention_mask) # from the forward function
+
+                loss = 0.25*criterion['type'](vtype_output, vtype_label.float()) + \
+                        0.25*criterion['polarity'](vpolarity_output, vpolarity_label.float()) + \
+                        0.25*criterion['tense'](vtense_output, vtense_label.float()) + \
+                        0.25*criterion['certainty'](vcertainty_output, vcertainty_label.float())
+
+                total_loss_val += loss.item()
+
+            
+            print(f'Epochs: {epoch + 1} '
+                  f'| Train Loss: {total_loss_train / len(train_dataloader): .3f} '
+                  f'| Train Accuracy: {total_acc_train / (len(train_dataloader.dataset)): .3f} '
+                  f'| Val Loss: {total_loss_val / len(val_dataloader): .3f} '
+                  f'| Val Accuracy: {total_acc_val / len(val_dataloader.dataset): .3f}')
+            
+            if best_val_loss > total_loss_val:
+                best_val_loss = total_loss_val # saving only the best one
+                torch.save(model, f"model/{model_nm}.pt")
+                print("Saved model")
+                early_stopping_threshold_count = 0
+            else:
+                early_stopping_threshold_count += 1 # checking how many epochs have passed that val_loss didn't increase
+                
+            if early_stopping_threshold_count >= 3: # ==> patience=1
+                print("Early stopping")
+                break
