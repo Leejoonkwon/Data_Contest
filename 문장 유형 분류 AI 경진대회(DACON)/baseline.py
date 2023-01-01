@@ -1,5 +1,5 @@
 # https://dacon.io/en/competitions/official/236037/overview/description
-
+# dacon baseline 가져왔기 때문에 연습해보고 바꿔보기 
 import pandas as pd
 import numpy as np
 import torch
